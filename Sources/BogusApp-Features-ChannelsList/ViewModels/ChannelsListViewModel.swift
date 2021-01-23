@@ -10,7 +10,7 @@ import BogusApp_Common_Models
 import BogusApp_Common_Utils
 
 public struct ChannelsListViewModelActions {
-    public let showChannelsForSelectedTarget: (_ selectedTargets: [TargetSpecific]) -> Void
+    public let showPlansForSelectedChannel: (_ selectedChannel: Channel, alreadySelectedChannels: [Channel], selectedTargets: [TargetSpecific]) -> Void
     
     public init(showChannelsForSelectedTarget: @escaping ([TargetSpecific]) -> Void) {
         self.showChannelsForSelectedTarget = showChannelsForSelectedTarget

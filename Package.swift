@@ -22,7 +22,7 @@ let package = Package(
         .target(
             name: "BogusApp-Features-ChannelsList",
             dependencies: [
-                .product(name: "BogusApp-Common-Models", package: "BogusApp-Common-Utils"),
+                .product(name: "BogusApp-Common-Models", package: "BogusApp-Common-Models"),
                 .product(name: "BogusApp-Common-Utils", package: "BogusApp-Common-Utils"),
                 .product(name: "BogusApp-Common-Networking", package: "BogusApp-Common-Networking")
             ]),

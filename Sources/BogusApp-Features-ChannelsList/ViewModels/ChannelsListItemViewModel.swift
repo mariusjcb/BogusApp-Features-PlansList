@@ -11,17 +11,13 @@ import BogusApp_Common_Utils
 
 public struct ChannelsListItemViewModel {
     public let id: UUID
-    
-    public let title: String
-    
-    @Observable
-    public var selected: Bool = false
+    public let name: String
 }
 
 extension ChannelsListItemViewModel: Equatable {
-    public init(target: TargetSpecific) {
-        self.id = target.id
-        self.title = target.title
+    public init(channel: Channel) {
+        self.id = channel.id
+        self.name = channel.name
     }
     
     public static func == (lhs: ChannelsListItemViewModel, rhs: ChannelsListItemViewModel) -> Bool {
