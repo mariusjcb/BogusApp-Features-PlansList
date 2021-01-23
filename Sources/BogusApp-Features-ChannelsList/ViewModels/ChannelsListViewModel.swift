@@ -10,21 +10,24 @@ import BogusApp_Common_Models
 import BogusApp_Common_Utils
 
 public struct ChannelsListViewModelActions {
-    public let showPlansForSelectedChannel: (_ selectedChannel: Channel, alreadySelectedChannels: [Channel], selectedTargets: [TargetSpecific]) -> Void
+    public let showPlansSelector: (_ plans: [Plan], @escaping (_ didSelect: Int) -> Void) -> Void
+    public let showCampaignReview: (_ selectedTargets: [TargetSpecific], _ selectedPlans: [(Channel, Int)]) -> Void
     
-    public init(showChannelsForSelectedTarget: @escaping ([TargetSpecific]) -> Void) {
-        self.showChannelsForSelectedTarget = showChannelsForSelectedTarget
+    public init(showPlansSelector: @escaping (_ plans: [Plan], @escaping (_ didSelect: Int) -> Void) -> Void,
+                showCampaignReview: @escaping (_ selectedTargets: [TargetSpecific], _ selectedPlans: [(Channel, Int)]) -> Void) {
+        self.showPlansSelector = showPlansSelector
+        self.showCampaignReview = showCampaignReview
     }
 }
 
 public protocol ChannelsListViewModelInput {
     func didSelectItem(at index: Int)
+    func didTapReset()
     func didTapNext()
 }
 
 public protocol ChannelsListViewModelOutput {
     var itemsObservable: Observable<[ChannelsListItemViewModel]> { get }
-    var loadingObservable: Observable<Bool> { get }
     var errorObservable: Observable<String> { get }
     var title: String { get }
 }
@@ -33,54 +36,64 @@ public protocol ChannelsListViewModel: ChannelsListViewModelInput & ChannelsList
 
 public final class DefaultChannelsListViewModel: ChannelsListViewModel {
     
-    private let fetchChannelsListUseCase: FetchChannelsListUseCase
     private let actions: ChannelsListViewModelActions
     
-    private var channels: [TargetSpecific] = [] {
-        didSet { items = channels.map(ChannelsListItemViewModel.init) }
-    }
+    private var targets: [TargetSpecific]
     
-    public let title = NSLocalizedString("Select specifics...", comment: "")
+    private let channels: [Channel]
+    
+    public let title = NSLocalizedString("Select channel...", comment: "")
     
     @Observable private var items: [ChannelsListItemViewModel] = []
-    @Observable private var loading: Bool = false
     @Observable private var error: String = ""
     
     // MARK: - OUTPUT
     
     public var itemsObservable: Observable<[ChannelsListItemViewModel]> { _items }
-    public var loadingObservable: Observable<Bool> { _loading }
     public var errorObservable: Observable<String> { _error }
     
-    public init(fetchChannelsListUseCase: FetchChannelsListUseCase, actions: ChannelsListViewModelActions) {
-        self.fetchChannelsListUseCase = fetchChannelsListUseCase
+    public init(targets: [TargetSpecific], actions: ChannelsListViewModelActions) {
         self.actions = actions
-        
-        fetchTargets()
+        self.targets = targets
+        let tmpChannels = targets.map { $0.channels }
+        let channelsSet = Set<Channel>(tmpChannels.first ?? [])
+        channels = Array(tmpChannels.reduce(channelsSet) { $0.intersection($1) })
+        items = channels.map(ChannelsListItemViewModel.init)
     }
     
-    private func fetchTargets(ids: [UUID] = []) {
-        loading = true
-        fetchChannelsListUseCase.fetchTargets(ids: ids) { result in
-            switch result {
-            case .success(let channels):
-                self.channels = channels
-            case .failure(let error):
-                self.error = NSLocalizedString("Failed loading", comment: "") + " [\(error.localizedDescription)]"
-            }
-            self.loading = false
+    private func planSelectionHandler(for index: Int) -> (_ didSelect: Int) -> Void {
+        return { [weak self] planIndex in
+            guard let `self` = self else { return }
+            guard index >= 0 && self.channels.count > index else { return }
+            guard planIndex >= 0 && self.channels[index].plans.count > planIndex else { return }
+            self.items[index].setSelectedPlan(self.channels[index].plans[planIndex], at: planIndex)
+            let items = self.items
+            self.items = items
         }
     }
     
     // MARK: - INPUT
     
+    public func didTapReset() {
+        items = items.map { item in
+            item.removeSelectedPlan()
+            return item
+        }
+    }
+    
     public func didSelectItem(at index: Int) {
-        items[index].selected = true
+        guard items[index].selectedPlan == nil else {
+            error = NSLocalizedString("Single selection allowed", comment: "")
+            return
+        }
+        actions.showPlansSelector(channels[index].plans, planSelectionHandler(for: index))
     }
     
     public func didTapNext() {
-        let channels = self.items.enumerated().filter { $0.element.selected }.map { self.channels[$0.offset] }
-        actions.showChannelsForSelectedTarget(channels)
+        let selectedPlans = items.enumerated()
+            .map { (self.channels[$0.offset], $0.element.selectedPlanIndex) }
+            .filter { $0.1 != nil }.map { ($0.0, $0.1!) }
+        actions.showCampaignReview(targets, selectedPlans)
     }
     
 }
