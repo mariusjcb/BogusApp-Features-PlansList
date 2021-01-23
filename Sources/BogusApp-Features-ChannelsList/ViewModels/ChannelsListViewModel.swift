@@ -1,5 +1,5 @@
 //
-//  TargetsListViewModel.swift
+//  ChannelsListViewModel.swift
 //  BougsApp-iOS
 //
 //  Created by Marius Ilie on 23/01/2021.
@@ -9,7 +9,7 @@ import Foundation
 import BogusApp_Common_Models
 import BogusApp_Common_Utils
 
-public struct TargetsListViewModelActions {
+public struct ChannelsListViewModelActions {
     public let showChannelsForSelectedTarget: (_ selectedTargets: [TargetSpecific]) -> Void
     
     public init(showChannelsForSelectedTarget: @escaping ([TargetSpecific]) -> Void) {
@@ -17,43 +17,43 @@ public struct TargetsListViewModelActions {
     }
 }
 
-public protocol TargetsListViewModelInput {
+public protocol ChannelsListViewModelInput {
     func didSelectItem(at index: Int)
     func didTapNext()
 }
 
-public protocol TargetsListViewModelOutput {
-    var itemsObservable: Observable<[TargetsListItemViewModel]> { get }
+public protocol ChannelsListViewModelOutput {
+    var itemsObservable: Observable<[ChannelsListItemViewModel]> { get }
     var loadingObservable: Observable<Bool> { get }
     var errorObservable: Observable<String> { get }
     var title: String { get }
 }
 
-public protocol TargetsListViewModel: TargetsListViewModelInput & TargetsListViewModelOutput { }
+public protocol ChannelsListViewModel: ChannelsListViewModelInput & ChannelsListViewModelOutput { }
 
-public final class DefaultTargetsListViewModel: TargetsListViewModel {
+public final class DefaultChannelsListViewModel: ChannelsListViewModel {
     
-    private let fetchTargetsListUseCase: FetchTargetsListUseCase
-    private let actions: TargetsListViewModelActions
+    private let fetchChannelsListUseCase: FetchChannelsListUseCase
+    private let actions: ChannelsListViewModelActions
     
-    private var targets: [TargetSpecific] = [] {
-        didSet { items = targets.map(TargetsListItemViewModel.init) }
+    private var channels: [TargetSpecific] = [] {
+        didSet { items = channels.map(ChannelsListItemViewModel.init) }
     }
     
     public let title = NSLocalizedString("Select specifics...", comment: "")
     
-    @Observable private var items: [TargetsListItemViewModel] = []
+    @Observable private var items: [ChannelsListItemViewModel] = []
     @Observable private var loading: Bool = false
     @Observable private var error: String = ""
     
     // MARK: - OUTPUT
     
-    public var itemsObservable: Observable<[TargetsListItemViewModel]> { _items }
+    public var itemsObservable: Observable<[ChannelsListItemViewModel]> { _items }
     public var loadingObservable: Observable<Bool> { _loading }
     public var errorObservable: Observable<String> { _error }
     
-    public init(fetchTargetsListUseCase: FetchTargetsListUseCase, actions: TargetsListViewModelActions) {
-        self.fetchTargetsListUseCase = fetchTargetsListUseCase
+    public init(fetchChannelsListUseCase: FetchChannelsListUseCase, actions: ChannelsListViewModelActions) {
+        self.fetchChannelsListUseCase = fetchChannelsListUseCase
         self.actions = actions
         
         fetchTargets()
@@ -61,10 +61,10 @@ public final class DefaultTargetsListViewModel: TargetsListViewModel {
     
     private func fetchTargets(ids: [UUID] = []) {
         loading = true
-        fetchTargetsListUseCase.fetchTargets(ids: ids) { result in
+        fetchChannelsListUseCase.fetchTargets(ids: ids) { result in
             switch result {
-            case .success(let targets):
-                self.targets = targets
+            case .success(let channels):
+                self.channels = channels
             case .failure(let error):
                 self.error = NSLocalizedString("Failed loading", comment: "") + " [\(error.localizedDescription)]"
             }
@@ -79,8 +79,8 @@ public final class DefaultTargetsListViewModel: TargetsListViewModel {
     }
     
     public func didTapNext() {
-        let targets = self.items.enumerated().filter { $0.element.selected }.map { self.targets[$0.offset] }
-        actions.showChannelsForSelectedTarget(targets)
+        let channels = self.items.enumerated().filter { $0.element.selected }.map { self.channels[$0.offset] }
+        actions.showChannelsForSelectedTarget(channels)
     }
     
 }
