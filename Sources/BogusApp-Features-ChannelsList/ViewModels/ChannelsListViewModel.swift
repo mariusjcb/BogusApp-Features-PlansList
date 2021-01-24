@@ -10,10 +10,10 @@ import BogusApp_Common_Models
 import BogusApp_Common_Utils
 
 public struct ChannelsListViewModelActions {
-    public let showPlansSelector: (_ plans: [Plan], @escaping (_ didSelect: Int) -> Void) -> Void
+    public let showPlansSelector: (_ channel: Channel, _ plans: [Plan], @escaping (_ didSelect: Int) -> Void) -> Void
     public let showCampaignReview: (_ selectedTargets: [TargetSpecific], _ selectedPlans: [(Channel, Int)]) -> Void
     
-    public init(showPlansSelector: @escaping (_ plans: [Plan], @escaping (_ didSelect: Int) -> Void) -> Void,
+    public init(showPlansSelector: @escaping (_ channel: Channel, _ plans: [Plan], @escaping (_ didSelect: Int) -> Void) -> Void,
                 showCampaignReview: @escaping (_ selectedTargets: [TargetSpecific], _ selectedPlans: [(Channel, Int)]) -> Void) {
         self.showPlansSelector = showPlansSelector
         self.showCampaignReview = showCampaignReview
@@ -86,7 +86,7 @@ public final class DefaultChannelsListViewModel: ChannelsListViewModel {
             error = NSLocalizedString("Single selection allowed", comment: "")
             return
         }
-        actions.showPlansSelector(channels[index].plans, planSelectionHandler(for: index))
+        actions.showPlansSelector(channels[index], channels[index].plans, planSelectionHandler(for: index))
     }
     
     public func didTapNext() {
