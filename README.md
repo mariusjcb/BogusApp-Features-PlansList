@@ -1,3 +1,3 @@
-# BogusApp-Features-CampaignReview
+# BogusApp-Features-PlansList
 
 A description of this package.
